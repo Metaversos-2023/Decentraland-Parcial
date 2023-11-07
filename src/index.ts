@@ -1,4 +1,4 @@
-import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, pointerEventsSystem, Transform} from '@dcl/sdk/ecs'
+import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, PBPointerEventsResult, PointerEvents, pointerEventsSystem, PointerEventType, Transform} from '@dcl/sdk/ecs'
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 
 
@@ -127,6 +127,7 @@ export function main() {
       const t = Transform.getMutable(rightCollider)
       const m = Transform.getMutable(rightDoor)
       const n = Transform.getMutable(closedRightDoor)
+      const hoverFeedback = PointerEvents.getMutable(rightCollider)
       if(rightOpen){
         t.position.x = 15.9
         t.position.z = 2.3
@@ -134,6 +135,10 @@ export function main() {
         m.scale = Vector3.create(0,0,0)
         n.scale = Vector3.create(1,1,1)
         rightOpen = false
+
+      if (hoverFeedback.pointerEvents[0].eventInfo)
+      hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Close door'
+        
       }else{
         t.position.x = 16.1
         t.position.z = 1.7
@@ -142,6 +147,7 @@ export function main() {
         n.scale = Vector3.create(0,0,0)
         rightOpen = true
       }
+
     }
   )
 
