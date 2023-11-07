@@ -1,4 +1,4 @@
-import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, PointerEvents, pointerEventsSystem, Transform} from '@dcl/sdk/ecs'
+import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, PBPointerEventsResult, PointerEvents, pointerEventsSystem, PointerEventType, Transform} from '@dcl/sdk/ecs'
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 
 
@@ -142,9 +142,10 @@ export function main() {
         m.scale = Vector3.create(0,0,0)
         n.scale = Vector3.create(1,1,1)
         rightOpen = false
-        if (hoverFeedback.pointerEvents[0].eventInfo){
-          hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Open'
-        }
+
+      if (hoverFeedback.pointerEvents[0].eventInfo)
+      hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Close door'
+        
       }else{
         t.position.x = 16.1
         t.position.z = 1.7
@@ -156,6 +157,7 @@ export function main() {
           hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Close'
         }
       }
+
     }
   )
 
