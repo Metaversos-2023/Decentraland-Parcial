@@ -142,10 +142,8 @@ export function main() {
         m.scale = Vector3.create(0,0,0)
         n.scale = Vector3.create(1,1,1)
         rightOpen = false
-
-      if (hoverFeedback.pointerEvents[0].eventInfo)
-      hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Open'
-        
+        if (hoverFeedback.pointerEvents[0].eventInfo)
+        hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Open'
       }else{
         t.position.x = 16.1
         t.position.z = 1.7
@@ -189,21 +187,6 @@ export function main() {
   MeshRenderer.setBox(bible)
   MeshCollider.setBox(bible)
   let bibleGrabbed = false
-  pointerEventsSystem.onPointerDown(
-    {
-      entity: bible,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to grab'},
-    },
-    function () {
-      const t = MeshCollider.getMutable(bible)
-      t.mesh = undefined
-      AvatarAttach.create(bible,{
-        anchorPointId: AvatarAnchorPointType.AAPT_RIGHT_HAND,
-      })
-      bibleGrabbed = true
-      console.log(bibleGrabbed)
-    }
-  )
   
   const altair = engine.addEntity()
   Transform.create(altair,{
@@ -212,17 +195,23 @@ export function main() {
   })
   MeshCollider.setBox(altair)
 
-  
-    pointerEventsSystem.onPointerDown(
-      {
-        entity: altair,
-        opts: { button: InputAction.IA_SECONDARY, hoverText: 'Press F to drop'},
-      },
-      function () {
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: bible,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Send it to altar'},
+    },
+    function () {
+      if(!bibleGrabbed){
         const t = Transform.getMutable(bible)
-        t.parent = altair
+        const m = Transform.getMutable(altair)
+        t.position.x = m.position.x
+        t.position.y = m.position.y + 1
+        t.position.z = m.position.z
+        bibleGrabbed = true
       }
-    )
+    }
+  )
+  
 }
 
 function PutChair(newPosition: Vector3) {
