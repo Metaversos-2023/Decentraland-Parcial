@@ -144,7 +144,7 @@ export function main() {
         rightOpen = false
 
       if (hoverFeedback.pointerEvents[0].eventInfo)
-      hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Close door'
+      hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Open'
         
       }else{
         t.position.x = 16.1
