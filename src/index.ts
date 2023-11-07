@@ -1,4 +1,4 @@
-import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, pointerEventsSystem, Transform} from '@dcl/sdk/ecs'
+import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, PointerEvents, pointerEventsSystem, Transform} from '@dcl/sdk/ecs'
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 
 
@@ -7,6 +7,7 @@ import { bounceScalingSystem, circularSystem } from './systems'
 import { setupUi } from './ui'
 import { BounceScaling, Spinner } from './components'
 import { createCube } from './factory'
+import { ReactEcsRenderer, Label } from '@dcl/sdk/react-ecs'
 
 // Defining behavior. See `src/systems.ts` file.
 engine.addSystem(circularSystem)
@@ -57,22 +58,23 @@ export function main() {
   
   const leftCollider = engine.addEntity()
   Transform.create(leftCollider, {
-    position: Vector3.create(13.8, 0, 1.7),
-    scale: Vector3.create(1.5, 7, .5),
-    rotation: Quaternion.create(0, 2, 0)
+    position: Vector3.create(14.2, 0, 2.3),
+    scale: Vector3.create(1.5, 7, .5)
   })
   MeshCollider.setBox(leftCollider)
 
   let leftOpen = false
+
   pointerEventsSystem.onPointerDown(
     {
       entity: leftCollider,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to open/close'},
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to Open', maxDistance: 4},
     },
     function () {
       const t = Transform.getMutable(leftCollider)
       const m = Transform.getMutable(leftDoor)
       const n = Transform.getMutable(closedLeftDoor)
+      const hoverFeedback = PointerEvents.getMutable(leftCollider)
       if(leftOpen){
         t.position.x = 14.2
         t.position.z = 2.3
@@ -80,6 +82,9 @@ export function main() {
         m.scale = Vector3.create(0,0,0)
         n.scale = Vector3.create(1,1,1)
         leftOpen = false
+        if (hoverFeedback.pointerEvents[0].eventInfo){
+          hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Open'
+        }
       }else{
         t.position.x = 13.8
         t.position.z = 1.7
@@ -87,6 +92,9 @@ export function main() {
         m.scale = Vector3.create(1,1,1)
         n.scale = Vector3.create(0,0,0)
         leftOpen = true
+        if (hoverFeedback.pointerEvents[0].eventInfo){
+          hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Close'
+        }
       }
     }
   )
@@ -110,9 +118,8 @@ export function main() {
   
   const rightCollider = engine.addEntity()
   Transform.create(rightCollider, {
-    position: Vector3.create(16.1, 0, 1.7),
-    scale: Vector3.create(1.5, 7, .5),
-    rotation: Quaternion.create(0, -1.5, 0)
+    position: Vector3.create(15.9, 0, 2.3),
+    scale: Vector3.create(1.5, 7, .5)
   })
   MeshCollider.setBox(rightCollider)
 
@@ -121,12 +128,13 @@ export function main() {
   pointerEventsSystem.onPointerDown(
     {
       entity: rightCollider,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to open/close'},
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to Open', maxDistance: 4},
     },
     function () {
       const t = Transform.getMutable(rightCollider)
       const m = Transform.getMutable(rightDoor)
       const n = Transform.getMutable(closedRightDoor)
+      const hoverFeedback = PointerEvents.getMutable(rightCollider)
       if(rightOpen){
         t.position.x = 15.9
         t.position.z = 2.3
@@ -134,6 +142,9 @@ export function main() {
         m.scale = Vector3.create(0,0,0)
         n.scale = Vector3.create(1,1,1)
         rightOpen = false
+        if (hoverFeedback.pointerEvents[0].eventInfo){
+          hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Open'
+        }
       }else{
         t.position.x = 16.1
         t.position.z = 1.7
@@ -141,6 +152,9 @@ export function main() {
         m.scale = Vector3.create(1,1,1)
         n.scale = Vector3.create(0,0,0)
         rightOpen = true
+        if (hoverFeedback.pointerEvents[0].eventInfo){
+          hoverFeedback.pointerEvents[0].eventInfo.hoverText = 'Press E to Close'
+        }
       }
     }
   )
@@ -150,7 +164,7 @@ export function main() {
   pointerEventsSystem.onPointerDown(
     {
       entity: stepGenerator,
-      opts: { button: InputAction.IA_PRIMARY},
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to create steps'},
     },
     function () {
       const step = engine.addEntity()
@@ -165,18 +179,48 @@ export function main() {
     }
   )
 
-  const bible = createCube(15, 14, 15, true)
+  const bible = engine.addEntity()
+  Transform.create(bible, {
+    position: Vector3.create(15, 14, 15),
+    scale: Vector3.create(.25, .4, .15)
+  })
+  MeshRenderer.setBox(bible)
+  MeshCollider.setBox(bible)
+  let bibleGrabbed = false
   pointerEventsSystem.onPointerDown(
     {
       entity: bible,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: "Press E to grab"},
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to grab'},
     },
     function () {
+      const t = MeshCollider.getMutable(bible)
+      t.mesh = undefined
       AvatarAttach.create(bible,{
         anchorPointId: AvatarAnchorPointType.AAPT_RIGHT_HAND,
       })
+      bibleGrabbed = true
+      console.log(bibleGrabbed)
     }
   )
+  
+  const altair = engine.addEntity()
+  Transform.create(altair,{
+    position: Vector3.create(15.25,1.27,27.55),
+    scale: Vector3.create(.8,1.5,.8)
+  })
+  MeshCollider.setBox(altair)
+
+  
+    pointerEventsSystem.onPointerDown(
+      {
+        entity: altair,
+        opts: { button: InputAction.IA_SECONDARY, hoverText: 'Press F to drop'},
+      },
+      function () {
+        const t = Transform.getMutable(bible)
+        t.parent = altair
+      }
+    )
 }
 
 function PutChair(newPosition: Vector3) {
@@ -201,7 +245,7 @@ function PutChair(newPosition: Vector3) {
   MeshCollider.setBox(back)
 }
 
-function PutAltair() {
+function PutAltair(){
   const altar = engine.addEntity();
   GltfContainer.create(altar, {
     src: 'Modelos/Altar.glb'
@@ -217,13 +261,6 @@ function PutAltair() {
   Transform.create(altar_collider, {
     position: Vector3.create(15.27,0,12),
   });
-
-  const base = engine.addEntity()
-  Transform.create(base,{
-    position: Vector3.create(15.25,1.27,27.55),
-    scale: Vector3.create(.8,1.5,.8)
-  })
-  MeshCollider.setBox(base)
 }
 
 function PutFountain() {
