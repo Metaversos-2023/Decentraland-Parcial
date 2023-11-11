@@ -180,12 +180,19 @@ export function main() {
   )
 
   const bible = engine.addEntity()
-  Transform.create(bible, {
-    position: Vector3.create(15, 14, 15),
-    scale: Vector3.create(.25, .4, .15)
+  GltfContainer.create(bible, {
+    src: 'Modelos/Bible.glb'
   })
-  MeshRenderer.setBox(bible)
-  MeshCollider.setBox(bible)
+  Transform.create(bible, {
+    position: Vector3.create(14,8.5,2),
+  });
+  const bible_colider = engine.addEntity()
+  GltfContainer.create(bible_colider, {
+    src: 'Modelos/Bible_collider.glb'
+  })
+  Transform.create(bible_colider, {
+    position: Vector3.create(14,8.5,2),
+  });
   let bibleGrabbed = false
   
   const altair = engine.addEntity()
@@ -197,16 +204,19 @@ export function main() {
 
   pointerEventsSystem.onPointerDown(
     {
-      entity: bible,
+      entity: bible_colider,
       opts: { button: InputAction.IA_PRIMARY, hoverText: 'Send it to altar'},
     },
     function () {
-      if(!bibleGrabbed){
+      if(bibleGrabbed === false){
         const t = Transform.getMutable(bible)
-        const m = Transform.getMutable(altair)
-        t.position.x = m.position.x
-        t.position.y = m.position.y + 1
-        t.position.z = m.position.z
+        const m = Transform.getMutable(bible_colider)
+        t.position.x = 14.25
+        t.position.y = -4
+        t.position.z = 9.75
+        m.position.x = 0
+        m.position.y = 0
+        m.position.z = 0
         bibleGrabbed = true
       }
     }
