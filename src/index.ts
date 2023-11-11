@@ -7,7 +7,7 @@ import { bounceScalingSystem, circularSystem } from './systems'
 import { setupUi } from './ui'
 import { BounceScaling, Spinner } from './components'
 import { createCube } from './factory'
-import { ReactEcsRenderer, Label } from '@dcl/sdk/react-ecs'
+import { ReactEcsRenderer } from '@dcl/sdk/react-ecs'
 
 // Defining behavior. See `src/systems.ts` file.
 engine.addSystem(circularSystem)
@@ -212,6 +212,16 @@ export function main() {
     }
   )
   
+  // Create an entity
+	const cube = engine.addEntity()
+
+	// Give the entity a position via a transform component
+	Transform.create(cube, {
+		position: Vector3.create(5, 1, 5)
+	})
+
+	// Give the entity a visible shape via a MeshRenderer component
+	MeshRenderer.setBox(cube)
 }
 
 function PutChair(newPosition: Vector3) {
@@ -253,6 +263,19 @@ function PutAltair(){
     position: Vector3.create(15.27,0,12),
   });
 }
+
+// Define a System
+function rotationSystem(dt: number) {
+
+  // query for entities that include both MeshRenderer and Transform components	
+  for (const [entity] of engine.getEntitiesWith(MeshRenderer, Transform)) {
+    const transform = Transform.getMutable(entity)
+    transform.rotation = Quaternion.multiply(transform.rotation, Quaternion.fromAngleAxis(dt * 10, Vector3.Up()))
+  }
+}
+
+// Add the system to the engine
+engine.addSystem(rotationSystem)
 
 function PutFountain() {
   const fountain = engine.addEntity();
