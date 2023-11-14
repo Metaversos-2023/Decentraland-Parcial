@@ -3,6 +3,7 @@ import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 
 
 import { bounceScalingSystem, circularSystem } from './systems'
+import { TextShape } from "@dcl/sdk/ecs"
 
 import { setupUi } from './ui'
 import { BounceScaling, Spinner } from './components'
@@ -164,7 +165,7 @@ export function main() {
   pointerEventsSystem.onPointerDown(
     {
       entity: stepGenerator,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to create steps'},
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to create steps', maxDistance: 5},
     },
     function () {
       const step = engine.addEntity()
@@ -195,6 +196,15 @@ export function main() {
   });
   let bibleGrabbed = false
   
+  const sign = engine.addEntity()
+  Transform.create(sign, {
+    position: Vector3.create(15.25,3.2,31),
+  })
+  TextShape.create(sign, {
+    text: '',
+    textColor: Color4.create(0, 0, 0, 1)
+  })
+  
   const altair = engine.addEntity()
   Transform.create(altair,{
     position: Vector3.create(15.25,1.27,27.55),
@@ -204,34 +214,74 @@ export function main() {
 
   pointerEventsSystem.onPointerDown(
     {
-      entity: bible_colider,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Send it to altar'},
+      entity: altair,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Reveal quest', maxDistance: 4},
     },
     function () {
-      if(bibleGrabbed === false){
+      const mutableText = TextShape.getMutable(sign)
+        mutableText.text = 'Find the bible. \nFor hints, look in the fountain'
+      const t = Transform.getMutable(altair)
+      t.scale = Vector3.create(0,0,0)
+      const altair_2 = engine.addEntity()
+      Transform.create(altair_2,{
+        position: Vector3.create(15.25,1.27,27.55),
+        scale: Vector3.create(.8,1.5,.8)
+      })
+      MeshCollider.setBox(altair_2)
+    }
+  )
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: bible_colider,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Send it to altar', maxDistance: 4},
+    },
+    function () {
         const t = Transform.getMutable(bible)
         const m = Transform.getMutable(bible_colider)
         t.position.x = 14.25
         t.position.y = -4
         t.position.z = 9.75
-        m.position.x = 0
-        m.position.y = 0
-        m.position.z = 0
+        m.scale = Vector3.create(0,0,0)
         bibleGrabbed = true
+        const v = TextShape.getMutable(sign)
+        v.text = 'Thank you, mass dismissed'
+        const c = TextShape.getMutable(hint)
+        c.text = ''
+    }
+  )
+
+  const hint = engine.addEntity()
+  Transform.create(hint, {
+    position: Vector3.create(21.6,0.95,5.1),
+    rotation: Quaternion.create(1,0,0)
+  })
+  TextShape.create(hint, {
+    text: '',
+    fontSize: 0.5
+  })
+
+  const fountain = engine.addEntity()
+  Transform.create(fountain,{
+    position: Vector3.create(21.6,0,5.1),
+    scale: Vector3.create(.8,2,.8)
+  })
+  MeshCollider.setCylinder(fountain)
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: fountain,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Reveal hint', maxDistance: 4},
+    },
+    function () {
+      const mutableText = TextShape.getMutable(hint)
+      if(bibleGrabbed == false){
+        mutableText.text = 'Look in the Heavens\nFind the angel'
+      }else{
+        mutableText.text = 'No hints available'
       }
     }
   )
-  
-  // Create an entity
-	const cube = engine.addEntity()
-
-	// Give the entity a position via a transform component
-	Transform.create(cube, {
-		position: Vector3.create(5, 1, 5)
-	})
-
-	// Give the entity a visible shape via a MeshRenderer component
-	MeshRenderer.setBox(cube)
 }
 
 function PutChair(newPosition: Vector3) {
@@ -271,6 +321,7 @@ function PutAltair(){
   })
   Transform.create(altar_collider, {
     position: Vector3.create(15.27,0,12),
+    scale: Vector3.create(1,1,1.007)
   });
 }
 
@@ -295,13 +346,6 @@ function PutFountain() {
   Transform.create(fountain, {
     position: Vector3.create(15,0,20),
   });
-
-  const base = engine.addEntity()
-  Transform.create(base,{
-    position: Vector3.create(21.6,0,5.1),
-    scale: Vector3.create(.8,2,.8)
-  })
-  MeshCollider.setCylinder(base)
 }
 
 function PutChurch() {
