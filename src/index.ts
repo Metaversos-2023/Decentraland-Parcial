@@ -1,14 +1,9 @@
-import { AvatarAnchorPointType, AvatarAttach, engine, Entity, GltfContainer, InputAction, inputSystem, Material, MeshCollider, MeshRenderer, PBPointerEventsResult, PointerEvents, pointerEventsSystem, PointerEventType, Transform} from '@dcl/sdk/ecs'
+import { engine, Font, GltfContainer, InputAction, MeshCollider, MeshRenderer, PointerEvents, pointerEventsSystem, Transform} from '@dcl/sdk/ecs'
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 
 
 import { bounceScalingSystem, circularSystem } from './systems'
 import { TextShape } from "@dcl/sdk/ecs"
-
-import { setupUi } from './ui'
-import { BounceScaling, Spinner } from './components'
-import { createCube } from './factory'
-import { ReactEcsRenderer } from '@dcl/sdk/react-ecs'
 
 // Defining behavior. See `src/systems.ts` file.
 engine.addSystem(circularSystem)
@@ -39,6 +34,16 @@ export function main() {
   PutChurch()
 
   PutRug()
+
+  const welcome = engine.addEntity()
+  Transform.create(welcome, {
+    position: Vector3.create(15,4.55,1.7),
+  })
+  TextShape.create(welcome, {
+    text: 'Welcome to the church, please go to the altair',
+    textColor: Color4.create(0, 0, 0, 1)
+  })
+  let missionActive = false
 
   const leftDoor = engine.addEntity()
   GltfContainer.create(leftDoor, {
@@ -160,57 +165,32 @@ export function main() {
     }
   )
 
-  const stepGenerator = createCube(2, 1, 30, true)
-  let currentPosition = Vector3.create(2,1,30)
-  pointerEventsSystem.onPointerDown(
-    {
-      entity: stepGenerator,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Press E to create steps', maxDistance: 5},
-    },
-    function () {
-      const step = engine.addEntity()
-      const newPosition = Vector3.create(currentPosition.x,currentPosition.y+1,currentPosition.z-1)
-      Transform.create(step, {
-        position: newPosition,
-        scale: Vector3.create(2.5,1,1)
-      })
-      MeshRenderer.setBox(step)
-      MeshCollider.setBox(step)
-      currentPosition = newPosition
-    }
-  )
-
-  const bible = engine.addEntity()
-  GltfContainer.create(bible, {
-    src: 'Modelos/Bible.glb'
-  })
-  Transform.create(bible, {
-    position: Vector3.create(14,8.5,2),
-  });
-  const bible_colider = engine.addEntity()
-  GltfContainer.create(bible_colider, {
-    src: 'Modelos/Bible_collider.glb'
-  })
-  Transform.create(bible_colider, {
-    position: Vector3.create(14,8.5,2),
-  });
-  let bibleGrabbed = false
-  
   const sign = engine.addEntity()
   Transform.create(sign, {
     position: Vector3.create(15.25,3.2,31),
   })
   TextShape.create(sign, {
     text: '',
-    textColor: Color4.create(0, 0, 0, 1)
+    textColor: Color4.create(0, 0, 0, 1),
+    fontSize: 5
   })
-  
+
+  const altairPosition = Vector3.create(15.25,1.27,27.55)
+  const altairScale = Vector3.create(.8,1.5,.8)
+
   const altair = engine.addEntity()
   Transform.create(altair,{
-    position: Vector3.create(15.25,1.27,27.55),
-    scale: Vector3.create(.8,1.5,.8)
+    position: altairPosition,
+    scale: altairScale
   })
   MeshCollider.setBox(altair)
+
+  const altair2 = engine.addEntity()
+    Transform.create(altair2,{
+      position: altairPosition,
+      scale: Vector3.create(0,0,0)
+    })
+  MeshCollider.setBox(altair2)
 
   pointerEventsSystem.onPointerDown(
     {
@@ -218,36 +198,19 @@ export function main() {
       opts: { button: InputAction.IA_PRIMARY, hoverText: 'Reveal quest', maxDistance: 4},
     },
     function () {
+      missionActive = true
       const mutableText = TextShape.getMutable(sign)
-        mutableText.text = 'Find the bible. \nFor hints, look in the fountain'
+      mutableText.text = 'Find the bible. \nFor hints, look in the fountain'
+      const mutableWelcome = TextShape.getMutable(welcome)
+      mutableWelcome.text = ''
       const t = Transform.getMutable(altair)
       t.scale = Vector3.create(0,0,0)
-      const altair_2 = engine.addEntity()
-      Transform.create(altair_2,{
-        position: Vector3.create(15.25,1.27,27.55),
-        scale: Vector3.create(.8,1.5,.8)
-      })
-      MeshCollider.setBox(altair_2)
-    }
-  )
-
-  pointerEventsSystem.onPointerDown(
-    {
-      entity: bible_colider,
-      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Send it to altar', maxDistance: 4},
-    },
-    function () {
-        const t = Transform.getMutable(bible)
-        const m = Transform.getMutable(bible_colider)
-        t.position.x = 14.25
-        t.position.y = -4
-        t.position.z = 9.75
-        m.scale = Vector3.create(0,0,0)
-        bibleGrabbed = true
-        const v = TextShape.getMutable(sign)
-        v.text = 'Thank you, mass dismissed'
-        const c = TextShape.getMutable(hint)
-        c.text = ''
+      const t2 = Transform.getMutable(altair2)
+      t2.scale = altairScale
+      const x = Transform.getMutable(angel)
+      x.scale = Vector3.create(1,1,1)
+      const y = Transform.getMutable(angel_collider)
+      y.scale = Vector3.create(2.4,2,1)
     }
   )
 
@@ -275,13 +238,512 @@ export function main() {
     },
     function () {
       const mutableText = TextShape.getMutable(hint)
-      if(bibleGrabbed == false){
-        mutableText.text = 'Look in the Heavens\nFind the angel'
+      if(missionActive == true){
+        if(bibleGrabbed == false){
+          mutableText.text = 'Look in the Heavens\nFind the angel'
+        }else if(demonAwake == false){
+          mutableText.text = 'Evil lurks in the shadows\nFind the devil'
+        }else{
+          mutableText.text = 'Nowhere is safe, nor inside, \nnor outside, nor the heavens'
+        }
       }else{
-        mutableText.text = 'No hints available'
+        mutableText.text = 'Nothing to show'
+      }
+      
+    }
+  )
+
+  const angel = engine.addEntity()
+  GltfContainer.create(angel, {
+    src: 'Modelos/Angel.glb'
+  })
+  Transform.create(angel, {
+    position: Vector3.create(2.5,1.2,4),
+    scale: Vector3.create(0,0,0)
+  });
+
+  const angel_collider = engine.addEntity()
+  Transform.create(angel_collider, {
+    position: Vector3.create(2,1,30.5),
+    scale: Vector3.create(0,0,0),
+  });
+  MeshCollider.setBox(angel_collider)
+
+  let currentCloudPosition = Vector3.create(2.5,1.2,4)
+  let currentColliderPosition = Vector3.create(2,0,29)
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: angel_collider,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Create steps for Heaven', maxDistance: 5},
+    },
+    function () {
+      const step = engine.addEntity()
+      GltfContainer.create(step, {
+        src: 'Modelos/Cloud.glb'
+      })
+      const newCloudPosition = Vector3.create(currentCloudPosition.x,currentCloudPosition.y+1,currentCloudPosition.z-1)
+      Transform.create(step, {
+        position: newCloudPosition,
+      })
+      currentCloudPosition = newCloudPosition
+
+      const cloud_collider = engine.addEntity()
+      const newColliderPosition = Vector3.create(currentColliderPosition.x,currentColliderPosition.y+1,currentColliderPosition.z-1)
+      Transform.create(cloud_collider, {
+        position: newColliderPosition,
+        scale: Vector3.create(3.4,1,1),
+      });
+      MeshCollider.setBox(cloud_collider)
+      currentColliderPosition = newColliderPosition
+    }
+  )
+
+  const bible = engine.addEntity()
+  GltfContainer.create(bible, {
+    src: 'Modelos/Bible.glb'
+  })
+  Transform.create(bible, {
+    position: Vector3.create(14,8.5,2),
+  });
+  const bible_colider = engine.addEntity()
+  GltfContainer.create(bible_colider, {
+    src: 'Modelos/Bible_collider.glb'
+  })
+  Transform.create(bible_colider, {
+    position: Vector3.create(14,8.5,2),
+  });
+  let bibleGrabbed = false
+  
+  const congratulations1 = engine.addEntity()
+  Transform.create(congratulations1, {
+    position: Vector3.create(15,14.5,20),
+    rotation: Quaternion.create(0,180,0)
+  })
+  TextShape.create(congratulations1, {
+    text: '',
+    fontSize: 0.5,
+    textColor: Color4.create(1, 0.843, 0, 1),
+    font: Font.F_SANS_SERIF,
+  })
+
+  const altair3 = engine.addEntity()
+  Transform.create(altair3,{
+    position: altairPosition,
+    scale: Vector3.create(0,0,0)
+  })
+  MeshCollider.setBox(altair3)
+
+  const altair4 = engine.addEntity()
+  Transform.create(altair4,{
+    position: altairPosition,
+    scale: Vector3.create(0,0,0)
+  })
+  MeshCollider.setBox(altair4)
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: bible_colider,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Send it to altar', maxDistance: 4},
+    },
+    function () {
+        const t = Transform.getMutable(bible)
+        const m = Transform.getMutable(bible_colider)
+        t.position.x = 14.25
+        t.position.y = -4
+        t.position.z = 9.75
+        m.scale = Vector3.create(0,0,0)
+        bibleGrabbed = true
+        missionActive = false
+        const d = TextShape.getMutable(congratulations1)
+        d.text = 'Well done, now return to the altair'
+        const v = TextShape.getMutable(sign)
+        v.text = 'Time to claim your reward'
+        const c = TextShape.getMutable(hint)
+        c.text = ''
+        const x = Transform.getMutable(altair2)
+        x.scale = Vector3.create(0,0,0)
+        const y = Transform.getMutable(altair3)
+        y.scale = altairScale
+    }
+  )
+
+  const devil = engine.addEntity()
+  GltfContainer.create(devil, {
+    src: 'Modelos/Devil.glb'
+  })
+  Transform.create(devil, {
+    position: Vector3.create(5.25,1,2),
+    scale: Vector3.create(0,0,0)
+  });
+
+  const devil_collider = engine.addEntity()
+  Transform.create(devil_collider, {
+    position: Vector3.create(29,1,28.5),
+    scale: Vector3.create(0,0,0),
+  });
+  MeshCollider.setBox(devil_collider)
+  let demonAwake = false
+
+  const devil_collider2 = engine.addEntity()
+    Transform.create(devil_collider2, {
+      position: Vector3.create(29,1,28.5),
+      scale: Vector3.create(0,0,0),
+  
+    });
+  MeshCollider.setBox(devil_collider2)
+
+  const devil_collider3 = engine.addEntity()
+    Transform.create(devil_collider3, {
+      position: Vector3.create(29,1,28.5),
+      scale: Vector3.create(0,0,0),
+  
+    });
+  MeshCollider.setBox(devil_collider3)
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: altair3,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Claim Reward', maxDistance: 4},
+    },
+    function () {
+        const x = Transform.getMutable(altair3)
+        x.scale = Vector3.create(0,0,0)
+        const y = Transform.getMutable(altair4)
+        y.scale = altairScale
+        missionActive = true
+        const d = TextShape.getMutable(congratulations1)
+        d.text = ''
+        const v = TextShape.getMutable(sign)
+        v.text = "Something's wrong.\nAn evil entity is around us.\nFind it"
+        const c = TextShape.getMutable(hint)
+        c.text = ''
+        const x1 = Transform.getMutable(devil_collider)
+        x1.scale = Vector3.create(1.25,2,1)
+        const y1 = Transform.getMutable(devil)
+        y1.scale = Vector3.create(1,1,1)
+    }
+  )
+
+  const warning = engine.addEntity()
+  Transform.create(warning, {
+    position: Vector3.create(26.25,5,28),
+    rotation: Quaternion.create(0,-1,0)
+  })
+  TextShape.create(warning, {
+    text: '',
+    fontSize: 8,
+    textColor: Color4.create(1, 0, 0, 1),
+    font: Font.F_SANS_SERIF,
+  })
+  let amount = 0
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: devil_collider,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Reveal Mystery', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(devil_collider)
+      x.scale = Vector3.create(0,0,0)
+      const y = Transform.getMutable(devil_collider2)
+      y.scale = Vector3.create(1.25,2,1)
+      demonAwake = true
+      const d = TextShape.getMutable(warning)
+      d.text = `Find the \ncrusifixes to \nend this.\n ${amount}/5 Found`
+      const v = TextShape.getMutable(sign)
+      v.text = ""
+      const c = TextShape.getMutable(hint)
+      c.text = ''
+      const x1 = Transform.getMutable(crusifix1)
+      x1.scale = Vector3.create(1,1,1)
+      const y1 = Transform.getMutable(crusifixCollider1)
+      y1.scale = Vector3.create(1,1,1)
+      const x2 = Transform.getMutable(crusifix2)
+      x2.scale = Vector3.create(1,1,1)
+      const y2 = Transform.getMutable(crusifixCollider2)
+      y2.scale = Vector3.create(1,1,1)
+      const x3 = Transform.getMutable(crusifix3)
+      x3.scale = Vector3.create(1,1,1)
+      const y3 = Transform.getMutable(crusifixCollider3)
+      y3.scale = Vector3.create(1,1,1)
+      const x4 = Transform.getMutable(crusifix4)
+      x4.scale = Vector3.create(1,1,1)
+      const y4 = Transform.getMutable(crusifixCollider4)
+      y4.scale = Vector3.create(1,1,1)
+      const x5 = Transform.getMutable(crusifix5)
+      x5.scale = Vector3.create(1,1,1)
+      const y5 = Transform.getMutable(crusifixCollider5)
+      y5.scale = Vector3.create(1,1,1)
+    }
+  )
+
+  const crusifix1 = engine.addEntity()
+  GltfContainer.create(crusifix1, {
+    src: 'Modelos/Crusifix.glb'
+  })
+  Transform.create(crusifix1, {
+    position: Vector3.create(4,-5,-15),
+    scale: Vector3.create(0,0,0)
+  });
+  const crusifixCollider1 = engine.addEntity()
+  GltfContainer.create(crusifixCollider1, {
+    src: 'Modelos/Crusifix_collider.glb'
+  })
+  Transform.create(crusifixCollider1, {
+    position: Vector3.create(4,-5,-15),
+    scale: Vector3.create(0,0,0)
+  });
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: crusifixCollider1,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Grab', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(crusifixCollider1)
+      x.scale = Vector3.create(0,0,0)
+      const crusifixCollider = engine.addEntity()
+      GltfContainer.create(crusifixCollider, {
+        src: 'Modelos/Crusifix_collider.glb'
+      })
+      Transform.create(crusifixCollider, {
+        position: Vector3.create(28,-5,12)
+      });
+      const y = Transform.getMutable(crusifix1)
+      y.position = Vector3.create(28,-5,12)
+      amount = amount + 1
+      const d = TextShape.getMutable(warning)
+      if(amount == 5){
+        d.text = `Well done,\n now exorcise it.`
+        missionActive=false
+        const v = Transform.getMutable(devil_collider2)
+        v.scale = Vector3.create(0,0,0)
+        const c = Transform.getMutable(devil_collider3)
+        c.scale = Vector3.create(1.25,2,1)
+      }else{
+        d.text = `Find the \ncrusifixes to \nend this.\n ${amount}/5 Found`
       }
     }
   )
+
+  const crusifix2 = engine.addEntity()
+  GltfContainer.create(crusifix2, {
+    src: 'Modelos/Crusifix.glb'
+  })
+  Transform.create(crusifix2, {
+    position: Vector3.create(14,8.5,2),
+    scale: Vector3.create(0,0,0)
+  });
+  const crusifixCollider2 = engine.addEntity()
+  GltfContainer.create(crusifixCollider2, {
+    src: 'Modelos/Crusifix_collider.glb'
+  })
+  Transform.create(crusifixCollider2, {
+    position: Vector3.create(14,8.5,2),
+    scale: Vector3.create(0,0,0)
+  });
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: crusifixCollider2,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Grab', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(crusifixCollider2)
+      x.scale = Vector3.create(0,0,0)
+      const crusifixCollider = engine.addEntity()
+      GltfContainer.create(crusifixCollider, {
+        src: 'Modelos/Crusifix_collider.glb'
+      })
+      Transform.create(crusifixCollider, {
+        position: Vector3.create(26,-5,11)
+      });
+      const y = Transform.getMutable(crusifix2)
+      y.position = Vector3.create(26,-5,11)
+      amount = amount + 1
+      const d = TextShape.getMutable(warning)
+      if(amount == 5){
+        d.text = `Well done,\n now exorcise it.`
+        missionActive=false
+        const v = Transform.getMutable(devil_collider2)
+        v.scale = Vector3.create(0,0,0)
+        const c = Transform.getMutable(devil_collider3)
+        c.scale = Vector3.create(1.25,2,1)
+      }else{
+        d.text = `Find the \ncrusifixes to \nend this.\n ${amount}/5 Found`
+      }
+    }
+  )
+
+  const crusifix3 = engine.addEntity()
+  GltfContainer.create(crusifix3, {
+    src: 'Modelos/Crusifix.glb'
+  })
+  Transform.create(crusifix3, {
+    position: Vector3.create(14.25,-4.75,10.25),
+    scale: Vector3.create(0,0,0)
+  });
+  const crusifixCollider3 = engine.addEntity()
+  GltfContainer.create(crusifixCollider3, {
+    src: 'Modelos/Crusifix_collider.glb'
+  })
+  Transform.create(crusifixCollider3, {
+    position: Vector3.create(14.25,-4.75,10.25),
+    scale: Vector3.create(0,0,0)
+  });
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: crusifixCollider3,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Grab', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(crusifixCollider3)
+      x.scale = Vector3.create(0,0,0)
+      const crusifixCollider = engine.addEntity()
+      GltfContainer.create(crusifixCollider, {
+        src: 'Modelos/Crusifix_collider.glb'
+      })
+      Transform.create(crusifixCollider, {
+        position: Vector3.create(30,-5,11)
+      });
+      const y = Transform.getMutable(crusifix3)
+      y.position = Vector3.create(30,-5,11)
+      amount = amount + 1
+      const d = TextShape.getMutable(warning)
+      if(amount == 5){
+        d.text = `Well done,\n now exorcise it.`
+        missionActive=false
+        const v = Transform.getMutable(devil_collider2)
+        v.scale = Vector3.create(0,0,0)
+        const c = Transform.getMutable(devil_collider3)
+        c.scale = Vector3.create(1.25,2,1)
+      }else{
+        d.text = `Find the \ncrusifixes to \nend this.\n ${amount}/5 Found`
+      }
+    }
+  )
+
+  const crusifix4 = engine.addEntity()
+  GltfContainer.create(crusifix4, {
+    src: 'Modelos/Crusifix.glb'
+  })
+  Transform.create(crusifix4, {
+    position: Vector3.create(1,-5,13.5),
+    scale: Vector3.create(0,0,0)
+  });
+  const crusifixCollider4 = engine.addEntity()
+  GltfContainer.create(crusifixCollider4, {
+    src: 'Modelos/Crusifix_collider.glb'
+  })
+  Transform.create(crusifixCollider4, {
+    position: Vector3.create(1,-5,13.5),
+    scale: Vector3.create(0,0,0)
+  });
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: crusifixCollider4,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Grab', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(crusifixCollider4)
+      x.scale = Vector3.create(0,0,0)
+      const crusifixCollider = engine.addEntity()
+      GltfContainer.create(crusifixCollider, {
+        src: 'Modelos/Crusifix_collider.glb'
+      })
+      Transform.create(crusifixCollider, {
+        position: Vector3.create(29,-5,10),
+      });
+      const y = Transform.getMutable(crusifix4)
+      y.position = Vector3.create(29,-5,10)
+      amount = amount + 1
+      const d = TextShape.getMutable(warning)
+      if(amount == 5){
+        d.text = `Well done,\n now exorcise it.`
+        missionActive=false
+        const v = Transform.getMutable(devil_collider2)
+        v.scale = Vector3.create(0,0,0)
+        const c = Transform.getMutable(devil_collider3)
+        c.scale = Vector3.create(1.25,2,1)
+      }else{
+        d.text = `Find the \ncrusifixes to \nend this.\n ${amount}/5 Found`
+      }
+    }
+  )
+
+  const crusifix5 = engine.addEntity()
+  GltfContainer.create(crusifix5, {
+    src: 'Modelos/Crusifix.glb'
+  })
+  Transform.create(crusifix5, {
+    position: Vector3.create(20,-5,-2),
+    scale: Vector3.create(0,0,0)
+  });
+  const crusifixCollider5 = engine.addEntity()
+  GltfContainer.create(crusifixCollider5, {
+    src: 'Modelos/Crusifix_collider.glb'
+  })
+  Transform.create(crusifixCollider5, {
+    position: Vector3.create(20,-5,-2),
+    scale: Vector3.create(0,0,0)
+  });
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: crusifixCollider5,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Grab', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(crusifixCollider5)
+      x.scale = Vector3.create(0,0,0)
+      const crusifixCollider = engine.addEntity()
+      GltfContainer.create(crusifixCollider, {
+        src: 'Modelos/Crusifix_collider.glb'
+      })
+      Transform.create(crusifixCollider, {
+        position: Vector3.create(27,-5,10),
+      });
+      const y = Transform.getMutable(crusifix5)
+      y.position = Vector3.create(27,-5,10)
+      amount = amount + 1
+      const d = TextShape.getMutable(warning)
+      if(amount == 5){
+        d.text = `Well done,\n now exorcise it.`
+        missionActive=false
+        const v = Transform.getMutable(devil_collider2)
+        v.scale = Vector3.create(0,0,0)
+        const c = Transform.getMutable(devil_collider3)
+        c.scale = Vector3.create(1.25,2,1)
+      }else{
+        d.text = `Find the \ncrusifixes to \nend this.\n ${amount}/5 Found`
+      }
+    }
+  )
+
+  const altair5 = engine.addEntity()
+  Transform.create(altair5,{
+    position: altairPosition,
+    scale: Vector3.create(0,0,0)
+  })
+  MeshCollider.setBox(altair5)
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: devil_collider3,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Exorcise', maxDistance: 4},
+    },
+    function () {
+      const x = Transform.getMutable(devil_collider3)
+      x.scale = Vector3.create(0,0,0)
+      const y = Transform.getMutable(devil)
+      y.scale = Vector3.create(0,0,0)
+      const d = TextShape.getMutable(warning)
+      d.text = `Excellent,\n go claim \n your prize.`
+        missionActive=false
+        const v = Transform.getMutable(altair4)
+        v.scale = Vector3.create(0,0,0)
+        const c = Transform.getMutable(altair5)
+        c.scale = altairScale
+    }
+  )
+
 }
 
 function PutChair(newPosition: Vector3) {
@@ -325,7 +787,7 @@ function PutAltair(){
   });
 }
 
-// Define a System
+/*// Define a System
 function rotationSystem(dt: number) {
 
   // query for entities that include both MeshRenderer and Transform components	
@@ -337,6 +799,7 @@ function rotationSystem(dt: number) {
 
 // Add the system to the engine
 engine.addSystem(rotationSystem)
+*/
 
 function PutFountain() {
   const fountain = engine.addEntity();
