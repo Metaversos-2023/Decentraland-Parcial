@@ -724,6 +724,13 @@ export function main() {
   })
   MeshCollider.setBox(altair5)
 
+  const altair6 = engine.addEntity()
+  Transform.create(altair6,{
+    position: altairPosition,
+    scale: Vector3.create(0,0,0)
+  })
+  MeshCollider.setBox(altair6)
+
   pointerEventsSystem.onPointerDown(
     {
       entity: devil_collider3,
@@ -734,13 +741,32 @@ export function main() {
       x.scale = Vector3.create(0,0,0)
       const y = Transform.getMutable(devil)
       y.scale = Vector3.create(0,0,0)
+      const w = TextShape.getMutable(hint)
+      w.text = ''
       const d = TextShape.getMutable(warning)
       d.text = `Excellent,\n go claim \n your prize.`
-        missionActive=false
-        const v = Transform.getMutable(altair4)
-        v.scale = Vector3.create(0,0,0)
-        const c = Transform.getMutable(altair5)
-        c.scale = altairScale
+      missionActive=false
+      const v = Transform.getMutable(altair4)
+      v.scale = Vector3.create(0,0,0)
+      const c = Transform.getMutable(altair5)
+      c.scale = altairScale
+    }
+  )
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: altair5,
+      opts: { button: InputAction.IA_PRIMARY, hoverText: 'Claim Reward', maxDistance: 4},
+    },
+    function () {
+        const x = Transform.getMutable(altair5)
+        x.scale = Vector3.create(0,0,0)
+        const y = Transform.getMutable(altair6)
+        y.scale = altairScale
+        const d = TextShape.getMutable(warning)
+        d.text = ''
+        const v = TextShape.getMutable(sign)
+        v.text = "Mass dismissed.\nMay God  be with you"
     }
   )
 
@@ -787,7 +813,7 @@ function PutAltair(){
   });
 }
 
-/*// Define a System
+// Define a System
 function rotationSystem(dt: number) {
 
   // query for entities that include both MeshRenderer and Transform components	
@@ -799,7 +825,7 @@ function rotationSystem(dt: number) {
 
 // Add the system to the engine
 engine.addSystem(rotationSystem)
-*/
+
 
 function PutFountain() {
   const fountain = engine.addEntity();
